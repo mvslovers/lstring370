@@ -212,6 +212,129 @@ static void test_injected_allocator(void)
           "alloc count matches dealloc count");
 }
 
+/* ------------------------------------------------------------------ */
+/*  lstr#sub.c tests                                                  */
+/* ------------------------------------------------------------------ */
+
+static void test_substr(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lsubstr ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+    Lscpy(a, &s, "Hello, World");
+
+    Lsubstr(a, &t, &s, 1, 5, ' ');
+    CHECK(lstr_eq_cstr(&t, "Hello"), "Lsubstr(1,5) = 'Hello'");
+
+    Lsubstr(a, &t, &s, 8, 5, ' ');
+    CHECK(lstr_eq_cstr(&t, "World"), "Lsubstr(8,5) = 'World'");
+
+    Lsubstr(a, &t, &s, 8, LSTR_REST, ' ');
+    CHECK(lstr_eq_cstr(&t, "World"), "Lsubstr(8,REST) = 'World'");
+
+    Lsubstr(a, &t, &s, 10, 5, '*');
+    CHECK(lstr_eq_cstr(&t, "rld**"), "Lsubstr(10,5) pads past end");
+
+    Lsubstr(a, &t, &s, 20, 3, '.');
+    CHECK(lstr_eq_cstr(&t, "..."), "Lsubstr past end is all pad");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_left_right_center(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lleft / Lright / Lcenter ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+    Lscpy(a, &s, "abc");
+
+    Lleft(a, &t, &s, 5, '.');
+    CHECK(lstr_eq_cstr(&t, "abc.."), "Lleft pad");
+    Lleft(a, &t, &s, 2, '.');
+    CHECK(lstr_eq_cstr(&t, "ab"),    "Lleft truncate");
+
+    Lright(a, &t, &s, 5, '.');
+    CHECK(lstr_eq_cstr(&t, "..abc"), "Lright pad");
+    Lright(a, &t, &s, 2, '.');
+    CHECK(lstr_eq_cstr(&t, "bc"),    "Lright truncate");
+
+    Lcenter(a, &t, &s, 7, '.');
+    CHECK(lstr_eq_cstr(&t, "..abc.."), "Lcenter pad even");
+    Lcenter(a, &t, &s, 6, '.');
+    CHECK(lstr_eq_cstr(&t, ".abc.."),  "Lcenter pad uneven");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_insert_overlay(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr ins, tgt, t;
+
+    printf("\n--- Test: Linsert / Loverlay ---\n");
+
+    Lzeroinit(&ins); Lzeroinit(&tgt); Lzeroinit(&t);
+    Lscpy(a, &tgt, "abcdef");
+    Lscpy(a, &ins, "XYZ");
+
+    Linsert(a, &t, &ins, &tgt, 0, ' ');
+    CHECK(lstr_eq_cstr(&t, "XYZabcdef"), "Linsert at 0 (start)");
+
+    Linsert(a, &t, &ins, &tgt, 3, ' ');
+    CHECK(lstr_eq_cstr(&t, "abcXYZdef"), "Linsert after pos 3");
+
+    Linsert(a, &t, &ins, &tgt, 6, ' ');
+    CHECK(lstr_eq_cstr(&t, "abcdefXYZ"), "Linsert after pos 6 (end)");
+
+    Linsert(a, &t, &ins, &tgt, 9, '.');
+    CHECK(lstr_eq_cstr(&t, "abcdef...XYZ"),
+          "Linsert past end pads target");
+
+    Loverlay(a, &t, &ins, &tgt, 2, ' ');
+    CHECK(lstr_eq_cstr(&t, "aXYZef"), "Loverlay at pos 2");
+
+    Loverlay(a, &t, &ins, &tgt, 5, ' ');
+    CHECK(lstr_eq_cstr(&t, "abcdXYZ"), "Loverlay extends past end");
+
+    Loverlay(a, &t, &ins, &tgt, 9, '.');
+    CHECK(lstr_eq_cstr(&t, "abcdef..XYZ"),
+          "Loverlay past end pads gap");
+
+    Lfree(a, &ins); Lfree(a, &tgt); Lfree(a, &t);
+}
+
+static void test_delstr(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Ldelstr ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+    Lscpy(a, &s, "abcdefghij");
+
+    Ldelstr(a, &t, &s, 4, 3);
+    CHECK(lstr_eq_cstr(&t, "abcghij"), "Ldelstr(4,3)");
+
+    Ldelstr(a, &t, &s, 1, 5);
+    CHECK(lstr_eq_cstr(&t, "fghij"),   "Ldelstr from start");
+
+    Ldelstr(a, &t, &s, 6, LSTR_REST);
+    CHECK(lstr_eq_cstr(&t, "abcde"),   "Ldelstr to end");
+
+    Ldelstr(a, &t, &s, 20, 5);
+    CHECK(lstr_eq_cstr(&t, "abcdefghij"),
+          "Ldelstr past end leaves string unchanged");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
 static void test_bad_args(void)
 {
     struct lstr_alloc *a = lstr_default_alloc();
@@ -244,6 +367,10 @@ int main(void)
     test_strcpy_strcat();
     test_case();
     test_injected_allocator();
+    test_substr();
+    test_left_right_center();
+    test_insert_overlay();
+    test_delstr();
     test_bad_args();
 
     printf("\n=== Results: %d/%d passed",

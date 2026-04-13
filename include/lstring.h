@@ -87,4 +87,30 @@ int Lstrcat(struct lstr_alloc *a, PLstr to, const PLstr from);
 void Lupper(PLstr s);
 void Llower(PLstr s);
 
+/* ================================================================== */
+/*  Substring / Position (lstr#sub.c)                                 */
+/*                                                                    */
+/*  Position arguments are 1-based to match REXX conventions.         */
+/*  The output `to` and the input string(s) must be distinct          */
+/*  Lstr instances; aliasing is not supported.                        */
+/* ================================================================== */
+
+/* Sentinel meaning "from start to end of string". */
+#define LSTR_REST  ((size_t)-1)
+
+int Lsubstr (struct lstr_alloc *a, PLstr to, const PLstr from,
+             size_t start, size_t len, char pad);
+int Lleft   (struct lstr_alloc *a, PLstr to, const PLstr from,
+             size_t len, char pad);
+int Lright  (struct lstr_alloc *a, PLstr to, const PLstr from,
+             size_t len, char pad);
+int Lcenter (struct lstr_alloc *a, PLstr to, const PLstr from,
+             size_t len, char pad);
+int Linsert (struct lstr_alloc *a, PLstr to, const PLstr ins,
+             const PLstr target, size_t pos, char pad);
+int Loverlay(struct lstr_alloc *a, PLstr to, const PLstr ins,
+             const PLstr target, size_t pos, char pad);
+int Ldelstr (struct lstr_alloc *a, PLstr to, const PLstr from,
+             size_t start, size_t len);
+
 #endif /* LSTRING_H */
