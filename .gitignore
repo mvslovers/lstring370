@@ -1,0 +1,28 @@
+# Generated ASM sources
+*.s
+
+# Object files
+*.o
+*.d
+
+# Build artifacts
+*.jcl
+contrib/
+dist/
+.build-warnings
+.mbt/
+*.xmit
+
+# Test binaries
+test/test_*
+!test/test_*.c
+
+# IDE
+compile_commands.json
+.cache/
+
+# Environment
+.env
+
+# OS
+.DS_Store

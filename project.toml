@@ -1,0 +1,48 @@
+[project]
+name = "lstring370"
+version = "0.1.0-dev"
+type = "library"
+
+[build]
+cflags = ["-std=gnu99", "-I./include"]
+
+[build.sources]
+c_dirs = ["src/"]
+
+[link]
+autocall = false
+
+[mvs.build.datasets.source]
+suffix = "SOURCE"
+dsorg = "PO"
+recfm = "FB"
+lrecl = 80
+blksize = 19040
+space = ["TRK", 50, 20, 30]
+
+[mvs.build.datasets.punch]
+suffix = "OBJECT"
+dsorg = "PO"
+recfm = "FB"
+lrecl = 80
+blksize = 19040
+space = ["TRK", 30, 10, 30]
+
+[mvs.build.datasets.ncalib]
+suffix = "NCALIB"
+dsorg = "PO"
+recfm = "U"
+lrecl = 0
+blksize = 19069
+space = ["TRK", 30, 10, 30]
+
+[dependencies]
+"mvslovers/crent370" = ">=1.0.7"
+
+[release]
+version_files = ["VERSION"]
+
+[artifacts]
+mvs = true
+headers = true
+header_files = ["lstring.h", "lstralloc.h"]
