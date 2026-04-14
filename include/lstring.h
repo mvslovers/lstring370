@@ -171,4 +171,48 @@ int    Labbrev  (const PLstr long_str, const PLstr info, size_t min);
  * position of the first differing byte. */
 size_t Lcompare (const PLstr s1, const PLstr s2, char pad);
 
+/* ================================================================== */
+/*  Transform (lstr#xlt.c)                                            */
+/* ================================================================== */
+
+/* Translate characters in `from` by mapping through (tablei, tableo).
+ * For each byte b in from: look up b in tablei; if found at offset k
+ * and k < tableo->len, replace with tableo->pstr[k]; otherwise
+ * replace with pad. If tablei is NULL, a full 256-byte identity map
+ * is assumed. If tableo is NULL, the default is REXX-style uppercase
+ * (tolower -> toupper is applied when tableo and tablei are both
+ * NULL). */
+int Ltranslate(struct lstr_alloc *a, PLstr to, const PLstr from,
+               const PLstr tableo, const PLstr tablei, char pad);
+
+/* Strip mode options. */
+#define LSTRIP_BOTH     'B'
+#define LSTRIP_LEADING  'L'
+#define LSTRIP_TRAILING 'T'
+
+/* Remove leading/trailing occurrences of `strip_char` from `from`.
+ * option is LSTRIP_BOTH / LSTRIP_LEADING / LSTRIP_TRAILING. */
+int Lstrip    (struct lstr_alloc *a, PLstr to, const PLstr from,
+               int option, char strip_char);
+
+/* Normalise whitespace: strip leading/trailing whitespace and replace
+ * each interior run of whitespace with exactly n copies of pad. */
+int Lspace    (struct lstr_alloc *a, PLstr to, const PLstr from,
+               size_t n, char pad);
+
+/* Concatenate `from` with itself `n` times. */
+int Lcopies   (struct lstr_alloc *a, PLstr to, const PLstr from,
+               size_t n);
+
+/* Reverse the bytes of `from` into `to`. */
+int Lreverse  (struct lstr_alloc *a, PLstr to, const PLstr from);
+
+/* Replace every non-overlapping occurrence of `old_str` in `from`
+ * with `new_str`. An empty old_str copies from unchanged. */
+int Lchangestr(struct lstr_alloc *a, PLstr to, const PLstr from,
+               const PLstr old_str, const PLstr new_str);
+
+/* Count non-overlapping occurrences of `needle` in `haystack`. */
+size_t Lcountstr(const PLstr needle, const PLstr haystack);
+
 #endif /* LSTRING_H */

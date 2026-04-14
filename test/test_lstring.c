@@ -548,6 +548,133 @@ static void test_abbrev_compare(void)
     Lfree(a, &s1); Lfree(a, &s2);
 }
 
+/* ------------------------------------------------------------------ */
+/*  lstr#xlt.c tests                                                  */
+/* ------------------------------------------------------------------ */
+
+static void test_translate(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr from, tableo, tablei, t;
+
+    printf("\n--- Test: Ltranslate ---\n");
+
+    Lzeroinit(&from); Lzeroinit(&tableo); Lzeroinit(&tablei); Lzeroinit(&t);
+    Lscpy(a, &from, "Hello, World!");
+
+    /* default = uppercase */
+    Ltranslate(a, &t, &from, NULL, NULL, ' ');
+    CHECK(lstr_eq_cstr(&t, "HELLO, WORLD!"), "Ltranslate default = upper");
+
+    /* ROT-13-ish: swap a<->A using tableo/tablei */
+    Lscpy(a, &from, "abc");
+    Lscpy(a, &tableo, "XYZ");
+    Lscpy(a, &tablei, "abc");
+    Ltranslate(a, &t, &from, &tableo, &tablei, '?');
+    CHECK(lstr_eq_cstr(&t, "XYZ"), "Ltranslate table mapping");
+
+    /* char not in tablei is passed through */
+    Lscpy(a, &from, "abcd");
+    Ltranslate(a, &t, &from, &tableo, &tablei, '?');
+    CHECK(lstr_eq_cstr(&t, "XYZd"), "Ltranslate passes through unmapped");
+
+    Lfree(a, &from);   Lfree(a, &tableo);
+    Lfree(a, &tablei); Lfree(a, &t);
+}
+
+static void test_strip_space(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lstrip / Lspace ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+    Lscpy(a, &s, "   hello   ");
+
+    Lstrip(a, &t, &s, LSTRIP_BOTH, ' ');
+    CHECK(lstr_eq_cstr(&t, "hello"), "Lstrip BOTH");
+    Lstrip(a, &t, &s, LSTRIP_LEADING, ' ');
+    CHECK(lstr_eq_cstr(&t, "hello   "), "Lstrip LEADING");
+    Lstrip(a, &t, &s, LSTRIP_TRAILING, ' ');
+    CHECK(lstr_eq_cstr(&t, "   hello"), "Lstrip TRAILING");
+
+    Lscpy(a, &s, "  the   quick brown    fox  ");
+    Lspace(a, &t, &s, 1, ' ');
+    CHECK(lstr_eq_cstr(&t, "the quick brown fox"),
+          "Lspace n=1 normalises whitespace");
+    Lspace(a, &t, &s, 2, ' ');
+    CHECK(lstr_eq_cstr(&t, "the  quick  brown  fox"),
+          "Lspace n=2 double spacing");
+    Lspace(a, &t, &s, 0, '-');
+    CHECK(lstr_eq_cstr(&t, "thequickbrownfox"),
+          "Lspace n=0 joins words");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_copies_reverse(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lcopies / Lreverse ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+    Lscpy(a, &s, "ab");
+
+    Lcopies(a, &t, &s, 3);
+    CHECK(lstr_eq_cstr(&t, "ababab"), "Lcopies(3)");
+
+    Lcopies(a, &t, &s, 0);
+    CHECK(t.len == 0, "Lcopies(0) is empty");
+
+    Lscpy(a, &s, "abcdef");
+    Lreverse(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "fedcba"), "Lreverse");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_changestr_countstr(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, old_str, new_str, t;
+
+    printf("\n--- Test: Lchangestr / Lcountstr ---\n");
+
+    Lzeroinit(&s);       Lzeroinit(&old_str);
+    Lzeroinit(&new_str); Lzeroinit(&t);
+
+    Lscpy(a, &s, "banana bandana");
+    Lscpy(a, &old_str, "an");
+    CHECK(Lcountstr(&old_str, &s) == 4, "Lcountstr('an' in 'banana bandana')==4");
+
+    Lscpy(a, &new_str, "AN");
+    Lchangestr(a, &t, &s, &old_str, &new_str);
+    CHECK(lstr_eq_cstr(&t, "bANANa bANdANa"), "Lchangestr 'an'->'AN'");
+
+    /* Grow: replace short with long */
+    Lscpy(a, &new_str, "XYZW");
+    Lchangestr(a, &t, &s, &old_str, &new_str);
+    CHECK(lstr_eq_cstr(&t, "bXYZWXYZWa bXYZWdXYZWa"),
+          "Lchangestr growth");
+
+    /* Shrink: replace with empty */
+    Lscpy(a, &new_str, "");
+    Lchangestr(a, &t, &s, &old_str, &new_str);
+    CHECK(lstr_eq_cstr(&t, "ba bda"), "Lchangestr shrink (delete pattern)");
+
+    /* No match */
+    Lscpy(a, &old_str, "zz");
+    Lchangestr(a, &t, &s, &old_str, &new_str);
+    CHECK(lstr_eq_cstr(&t, "banana bandana"),
+          "Lchangestr no match = copy");
+
+    Lfree(a, &s);       Lfree(a, &old_str);
+    Lfree(a, &new_str); Lfree(a, &t);
+}
+
 static void test_bad_args(void)
 {
     struct lstr_alloc *a = lstr_default_alloc();
@@ -592,6 +719,10 @@ int main(void)
     test_pos_lastpos();
     test_verify();
     test_abbrev_compare();
+    test_translate();
+    test_strip_space();
+    test_copies_reverse();
+    test_changestr_countstr();
     test_bad_args();
 
     printf("\n=== Results: %d/%d passed",
