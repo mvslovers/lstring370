@@ -238,4 +238,20 @@ int Lx2d(struct lstr_alloc *a, PLstr to, const PLstr from);
 int Lb2x(struct lstr_alloc *a, PLstr to, const PLstr from);
 int Lx2b(struct lstr_alloc *a, PLstr to, const PLstr from);
 
+/* ================================================================== */
+/*  Output (lstr#fmt.c)                                               */
+/*                                                                    */
+/*  NOTE: Lformat() - the REXX FORMAT() built-in - is deliberately    */
+/*  NOT part of lstring370. It depends on the NUMERIC DIGITS/FORM     */
+/*  settings of the running REXX environment and belongs in the      */
+/*  rexx370 arithmetic engine (WP-20), where the per-environment     */
+/*  wkbi_digits / wkbi_form context is available.                    */
+/* ================================================================== */
+
+#include <stdio.h>
+
+/* Write the contents of s to stream. Returns the number of bytes
+ * written, or a negative value on error. */
+int Lprint(FILE *stream, const PLstr s);
+
 #endif /* LSTRING_H */

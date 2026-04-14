@@ -825,6 +825,43 @@ static void test_b2x_x2b(void)
     Lfree(a, &s); Lfree(a, &t);
 }
 
+/* ------------------------------------------------------------------ */
+/*  lstr#fmt.c tests                                                  */
+/* ------------------------------------------------------------------ */
+
+static void test_lprint(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s;
+    FILE *fp;
+    char  buf[64];
+    size_t got;
+    int    rc;
+
+    printf("\n--- Test: Lprint ---\n");
+
+    Lzeroinit(&s);
+    Lscpy(a, &s, "hello world");
+
+    fp = tmpfile();
+    if (fp == NULL) {
+        CHECK(0, "tmpfile() available");
+        Lfree(a, &s);
+        return;
+    }
+
+    rc = Lprint(fp, &s);
+    CHECK(rc == 11, "Lprint returns bytes-written");
+
+    rewind(fp);
+    got = fread(buf, 1, sizeof(buf), fp);
+    CHECK(got == 11 && memcmp(buf, "hello world", 11) == 0,
+          "Lprint wrote exactly the Lstr bytes (no NUL, no extras)");
+
+    fclose(fp);
+    Lfree(a, &s);
+}
+
 static void test_bad_args(void)
 {
     struct lstr_alloc *a = lstr_default_alloc();
@@ -877,6 +914,7 @@ int main(void)
     test_c2d_d2c();
     test_d2x_x2d();
     test_b2x_x2b();
+    test_lprint();
     test_bad_args();
 
     printf("\n=== Results: %d/%d passed",
