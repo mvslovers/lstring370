@@ -335,6 +335,135 @@ static void test_delstr(void)
     Lfree(a, &s); Lfree(a, &t);
 }
 
+/* ------------------------------------------------------------------ */
+/*  lstr#wrd.c tests                                                  */
+/* ------------------------------------------------------------------ */
+
+static void test_words(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lwords / Lword ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+
+    Lscpy(a, &s, "  the quick   brown fox  ");
+    CHECK(Lwords(&s) == 4, "Lwords counts 4 words ignoring whitespace");
+
+    Lword(a, &t, &s, 1);
+    CHECK(lstr_eq_cstr(&t, "the"),   "Lword(1)='the'");
+    Lword(a, &t, &s, 3);
+    CHECK(lstr_eq_cstr(&t, "brown"), "Lword(3)='brown'");
+    Lword(a, &t, &s, 4);
+    CHECK(lstr_eq_cstr(&t, "fox"),   "Lword(4)='fox'");
+    Lword(a, &t, &s, 5);
+    CHECK(t.len == 0, "Lword(5)=''");
+
+    Lscpy(a, &s, "");
+    CHECK(Lwords(&s) == 0, "Lwords('')==0");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_subword(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lsubword ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+    Lscpy(a, &s, "the quick brown fox jumps");
+
+    Lsubword(a, &t, &s, 2, 2);
+    CHECK(lstr_eq_cstr(&t, "quick brown"), "Lsubword(2,2)");
+
+    Lsubword(a, &t, &s, 3, LSTR_REST);
+    CHECK(lstr_eq_cstr(&t, "brown fox jumps"),
+          "Lsubword(3,REST)");
+
+    Lsubword(a, &t, &s, 1, 1);
+    CHECK(lstr_eq_cstr(&t, "the"), "Lsubword(1,1)");
+
+    Lsubword(a, &t, &s, 10, 5);
+    CHECK(t.len == 0, "Lsubword past end is empty");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_word_index_length(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s;
+
+    printf("\n--- Test: Lwordindex / Lwordlength ---\n");
+
+    Lzeroinit(&s);
+    Lscpy(a, &s, "  ab  cdef gh");
+
+    CHECK(Lwordindex(&s, 1) == 3, "Lwordindex(1)==3");
+    CHECK(Lwordindex(&s, 2) == 7, "Lwordindex(2)==7");
+    CHECK(Lwordindex(&s, 3) == 12, "Lwordindex(3)==12");
+    CHECK(Lwordindex(&s, 4) == 0, "Lwordindex(4)==0 (none)");
+
+    CHECK(Lwordlength(&s, 1) == 2, "Lwordlength(1)==2");
+    CHECK(Lwordlength(&s, 2) == 4, "Lwordlength(2)==4");
+    CHECK(Lwordlength(&s, 4) == 0, "Lwordlength(4)==0");
+
+    Lfree(a, &s);
+}
+
+static void test_wordpos(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr p, s;
+
+    printf("\n--- Test: Lwordpos ---\n");
+
+    Lzeroinit(&p); Lzeroinit(&s);
+    Lscpy(a, &s, "now is the time for all good men");
+
+    Lscpy(a, &p, "the time");
+    CHECK(Lwordpos(&p, &s, 1) == 3, "Lwordpos('the time')==3");
+
+    Lscpy(a, &p, "all good");
+    CHECK(Lwordpos(&p, &s, 1) == 6, "Lwordpos('all good')==6");
+
+    Lscpy(a, &p, "no match");
+    CHECK(Lwordpos(&p, &s, 1) == 0, "Lwordpos('no match')==0");
+
+    Lscpy(a, &p, "the time");
+    CHECK(Lwordpos(&p, &s, 4) == 0, "Lwordpos with start past hit");
+
+    Lfree(a, &p); Lfree(a, &s);
+}
+
+static void test_delword(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Ldelword ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+    Lscpy(a, &s, "the quick brown fox");
+
+    Ldelword(a, &t, &s, 2, 1);
+    CHECK(lstr_eq_cstr(&t, "the brown fox"),
+          "Ldelword(2,1) drops 'quick'");
+
+    Ldelword(a, &t, &s, 2, 2);
+    CHECK(lstr_eq_cstr(&t, "the fox"),
+          "Ldelword(2,2) drops 'quick brown'");
+
+    Ldelword(a, &t, &s, 2, LSTR_REST);
+    CHECK(lstr_eq_cstr(&t, "the"),
+          "Ldelword(2,REST) drops to end and trims trailing blanks");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
 static void test_bad_args(void)
 {
     struct lstr_alloc *a = lstr_default_alloc();
@@ -371,6 +500,11 @@ int main(void)
     test_left_right_center();
     test_insert_overlay();
     test_delstr();
+    test_words();
+    test_subword();
+    test_word_index_length();
+    test_wordpos();
+    test_delword();
     test_bad_args();
 
     printf("\n=== Results: %d/%d passed",

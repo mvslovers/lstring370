@@ -113,4 +113,24 @@ int Loverlay(struct lstr_alloc *a, PLstr to, const PLstr ins,
 int Ldelstr (struct lstr_alloc *a, PLstr to, const PLstr from,
              size_t start, size_t len);
 
+/* ================================================================== */
+/*  Word operations (lstr#wrd.c)                                      */
+/*                                                                    */
+/*  Words are maximal runs of non-whitespace separated by one or      */
+/*  more whitespace characters. Whitespace classification uses        */
+/*  isspace() from <ctype.h>, so the rules are EBCDIC-correct on      */
+/*  MVS via crent370. Word indices are 1-based.                       */
+/* ================================================================== */
+
+int    Lword       (struct lstr_alloc *a, PLstr to,
+                    const PLstr from, size_t n);
+size_t Lwords      (const PLstr s);
+int    Lsubword    (struct lstr_alloc *a, PLstr to,
+                    const PLstr from, size_t n, size_t count);
+size_t Lwordindex  (const PLstr s, size_t n);
+size_t Lwordlength (const PLstr s, size_t n);
+size_t Lwordpos    (const PLstr phrase, const PLstr s, size_t start);
+int    Ldelword    (struct lstr_alloc *a, PLstr to,
+                    const PLstr from, size_t n, size_t count);
+
 #endif /* LSTRING_H */
