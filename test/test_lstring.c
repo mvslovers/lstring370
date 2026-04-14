@@ -675,6 +675,156 @@ static void test_changestr_countstr(void)
     Lfree(a, &new_str); Lfree(a, &t);
 }
 
+/* ------------------------------------------------------------------ */
+/*  lstr#cvt.c tests                                                  */
+/* ------------------------------------------------------------------ */
+
+static void test_c2x_x2c(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lc2x / Lx2c ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+
+    /* Build a byte sequence without embedding non-portable literals. */
+    {
+        unsigned char data[3];
+        data[0] = 0x00;
+        data[1] = 0x7F;
+        data[2] = 0xA5;
+        Lfx(a, &s, 3);
+        memcpy(s.pstr, data, 3);
+        s.len = 3;
+    }
+
+    Lc2x(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "007FA5"), "Lc2x produces hex digits");
+
+    /* Round-trip: back through Lx2c */
+    {
+        Lstr rt;
+        Lzeroinit(&rt);
+        Lx2c(a, &rt, &t);
+        CHECK(rt.len == 3 &&
+              rt.pstr[0] == 0x00 &&
+              rt.pstr[1] == 0x7F &&
+              rt.pstr[2] == 0xA5,
+              "Lx2c round-trips");
+        Lfree(a, &rt);
+    }
+
+    /* Lx2c with blanks and odd-digit error */
+    {
+        Lstr hex;
+        Lstr out;
+        Lzeroinit(&hex); Lzeroinit(&out);
+        Lscpy(a, &hex, "01 02 03");
+        Lx2c(a, &out, &hex);
+        CHECK(out.len == 3 && out.pstr[0] == 1 &&
+              out.pstr[1] == 2 && out.pstr[2] == 3,
+              "Lx2c accepts blanks between bytes");
+
+        Lscpy(a, &hex, "ABC");   /* odd number of hex digits */
+        CHECK(Lx2c(a, &out, &hex) == LSTR_ERR_BADARG,
+              "Lx2c rejects odd hex digit count");
+
+        Lfree(a, &hex); Lfree(a, &out);
+    }
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_c2d_d2c(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lc2d / Ld2c ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+
+    {
+        unsigned char data[2];
+        data[0] = 0x01;
+        data[1] = 0x00;
+        Lfx(a, &s, 2);
+        memcpy(s.pstr, data, 2);
+        s.len = 2;
+    }
+    Lc2d(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "256"), "Lc2d(01 00) = 256");
+
+    Lscpy(a, &s, "65");
+    Ld2c(a, &t, &s);
+    CHECK(t.len == 1 && t.pstr[0] == 65, "Ld2c('65') = 1 byte 0x41");
+
+    Lscpy(a, &s, "256");
+    Ld2c(a, &t, &s);
+    CHECK(t.len == 2 && t.pstr[0] == 1 && t.pstr[1] == 0,
+          "Ld2c('256') = 2 bytes 01 00");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_d2x_x2d(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Ld2x / Lx2d ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+
+    Lscpy(a, &s, "255");
+    Ld2x(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "FF"), "Ld2x(255)=FF");
+    Lscpy(a, &s, "65535");
+    Ld2x(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "FFFF"), "Ld2x(65535)=FFFF");
+
+    Lscpy(a, &s, "DEAD");
+    Lx2d(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "57005"), "Lx2d(DEAD)=57005");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
+static void test_b2x_x2b(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr s, t;
+
+    printf("\n--- Test: Lb2x / Lx2b ---\n");
+
+    Lzeroinit(&s); Lzeroinit(&t);
+
+    Lscpy(a, &s, "1111 0000");
+    Lb2x(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "F0"), "Lb2x('1111 0000')=F0");
+
+    Lscpy(a, &s, "11001010");
+    Lb2x(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "CA"), "Lb2x('11001010')=CA");
+
+    /* Odd bit count (not multiple of 4) is left-padded with zeros */
+    Lscpy(a, &s, "110");
+    Lb2x(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "6"), "Lb2x('110')=6 (left-padded)");
+
+    Lscpy(a, &s, "F0");
+    Lx2b(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "11110000"), "Lx2b(F0)=11110000");
+
+    Lscpy(a, &s, "CA FE");
+    Lx2b(a, &t, &s);
+    CHECK(lstr_eq_cstr(&t, "1100101011111110"),
+          "Lx2b(CA FE)=11001010 11111110");
+
+    Lfree(a, &s); Lfree(a, &t);
+}
+
 static void test_bad_args(void)
 {
     struct lstr_alloc *a = lstr_default_alloc();
@@ -723,6 +873,10 @@ int main(void)
     test_strip_space();
     test_copies_reverse();
     test_changestr_countstr();
+    test_c2x_x2c();
+    test_c2d_d2c();
+    test_d2x_x2d();
+    test_b2x_x2b();
     test_bad_args();
 
     printf("\n=== Results: %d/%d passed",

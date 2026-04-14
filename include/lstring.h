@@ -215,4 +215,27 @@ int Lchangestr(struct lstr_alloc *a, PLstr to, const PLstr from,
 /* Count non-overlapping occurrences of `needle` in `haystack`. */
 size_t Lcountstr(const PLstr needle, const PLstr haystack);
 
+/* ================================================================== */
+/*  Base conversion (lstr#cvt.c)                                      */
+/*                                                                    */
+/*  C2X / X2C   character <-> hex digits                              */
+/*  C2D / D2C   character <-> decimal digit string                    */
+/*  D2X / X2D   decimal digit string <-> hex digits                   */
+/*  B2X / X2B   binary bits <-> hex digits                            */
+/*                                                                    */
+/*  Numeric conversions (C2D/D2C/D2X/X2D) use 'long' as the           */
+/*  intermediate integer and are bounded by sizeof(long). The         */
+/*  rexx370 arithmetic engine (WP-20) will layer arbitrary-precision  */
+/*  variants on top when needed.                                      */
+/* ================================================================== */
+
+int Lc2x(struct lstr_alloc *a, PLstr to, const PLstr from);
+int Lx2c(struct lstr_alloc *a, PLstr to, const PLstr from);
+int Lc2d(struct lstr_alloc *a, PLstr to, const PLstr from);
+int Ld2c(struct lstr_alloc *a, PLstr to, const PLstr from);
+int Ld2x(struct lstr_alloc *a, PLstr to, const PLstr from);
+int Lx2d(struct lstr_alloc *a, PLstr to, const PLstr from);
+int Lb2x(struct lstr_alloc *a, PLstr to, const PLstr from);
+int Lx2b(struct lstr_alloc *a, PLstr to, const PLstr from);
+
 #endif /* LSTRING_H */
