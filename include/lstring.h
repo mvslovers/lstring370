@@ -133,4 +133,42 @@ size_t Lwordpos    (const PLstr phrase, const PLstr s, size_t start);
 int    Ldelword    (struct lstr_alloc *a, PLstr to,
                     const PLstr from, size_t n, size_t count);
 
+/* ================================================================== */
+/*  Search / Compare (lstr#srch.c)                                    */
+/*                                                                    */
+/*  Positions are 1-based. A return value of 0 means "not found".     */
+/* ================================================================== */
+
+/* Find the first occurrence of needle in haystack starting at the
+ * 1-based position 'start'. Returns the 1-based position of the
+ * match, or 0 if not found. An empty needle always returns 0. */
+size_t Lpos     (const PLstr needle, const PLstr haystack, size_t start);
+
+/* Alias for Lpos matching REXX INDEX semantics. */
+size_t Lindex   (const PLstr needle, const PLstr haystack, size_t start);
+
+/* Find the last occurrence of needle in haystack at or before the
+ * 1-based position 'start'. If start is 0, search the whole string. */
+size_t Llastpos (const PLstr needle, const PLstr haystack, size_t start);
+
+/* Verify mode for Lverify. */
+#define LVERIFY_NOMATCH   0   /* default: find first char NOT in ref   */
+#define LVERIFY_MATCH     1   /* 'M': find first char that IS in ref   */
+
+/* Find the 1-based position of the first character of 'from' (starting
+ * at 'start') that is / is-not present in 'ref'. Returns 0 if every
+ * character matches the criterion. */
+size_t Lverify  (const PLstr from, const PLstr ref,
+                 int mode, size_t start);
+
+/* REXX ABBREV semantics: returns non-zero (truthy) if 'info' is a
+ * leading substring of 'long_str' and its length is at least 'min'.
+ * If min == 0, min defaults to info->len (any non-empty prefix counts). */
+int    Labbrev  (const PLstr long_str, const PLstr info, size_t min);
+
+/* Compare two strings, padding the shorter one with 'pad'. Returns 0
+ * if the (possibly padded) contents are equal, else the 1-based
+ * position of the first differing byte. */
+size_t Lcompare (const PLstr s1, const PLstr s2, char pad);
+
 #endif /* LSTRING_H */

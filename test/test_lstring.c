@@ -464,6 +464,90 @@ static void test_delword(void)
     Lfree(a, &s); Lfree(a, &t);
 }
 
+/* ------------------------------------------------------------------ */
+/*  lstr#srch.c tests                                                 */
+/* ------------------------------------------------------------------ */
+
+static void test_pos_lastpos(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr needle, hay;
+
+    printf("\n--- Test: Lpos / Llastpos ---\n");
+
+    Lzeroinit(&needle); Lzeroinit(&hay);
+    Lscpy(a, &hay, "abracadabra");
+
+    Lscpy(a, &needle, "bra");
+    CHECK(Lpos(&needle, &hay, 1) == 2, "Lpos('bra')==2");
+    CHECK(Lpos(&needle, &hay, 3) == 9, "Lpos('bra', start=3)==9");
+    CHECK(Llastpos(&needle, &hay, 0) == 9, "Llastpos('bra')==9");
+    CHECK(Llastpos(&needle, &hay, 8) == 2, "Llastpos('bra', start=8)==2");
+
+    Lscpy(a, &needle, "xyz");
+    CHECK(Lpos(&needle, &hay, 1) == 0, "Lpos('xyz')==0 (miss)");
+    CHECK(Llastpos(&needle, &hay, 0) == 0, "Llastpos('xyz')==0");
+
+    Lscpy(a, &needle, "");
+    CHECK(Lpos(&needle, &hay, 1) == 0, "Lpos('')==0 by convention");
+
+    Lfree(a, &needle); Lfree(a, &hay);
+}
+
+static void test_verify(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr from, ref;
+
+    printf("\n--- Test: Lverify ---\n");
+
+    Lzeroinit(&from); Lzeroinit(&ref);
+    Lscpy(a, &from, "12.34");
+    Lscpy(a, &ref,  "0123456789");
+
+    CHECK(Lverify(&from, &ref, LVERIFY_NOMATCH, 1) == 3,
+          "Lverify(NOMATCH) finds '.' at pos 3");
+    CHECK(Lverify(&from, &ref, LVERIFY_MATCH, 1) == 1,
+          "Lverify(MATCH) finds digit at pos 1");
+
+    Lscpy(a, &from, "12345");
+    CHECK(Lverify(&from, &ref, LVERIFY_NOMATCH, 1) == 0,
+          "Lverify(NOMATCH) all digits returns 0");
+
+    Lfree(a, &from); Lfree(a, &ref);
+}
+
+static void test_abbrev_compare(void)
+{
+    struct lstr_alloc *a = lstr_default_alloc();
+    Lstr l, info, s1, s2;
+
+    printf("\n--- Test: Labbrev / Lcompare ---\n");
+
+    Lzeroinit(&l); Lzeroinit(&info);
+    Lzeroinit(&s1); Lzeroinit(&s2);
+
+    Lscpy(a, &l, "PRINT");
+    Lscpy(a, &info, "PR");
+    CHECK(Labbrev(&l, &info, 0) != 0, "'PR' is an abbrev of 'PRINT'");
+    CHECK(Labbrev(&l, &info, 3) == 0, "'PR' needs length>=3 -> no");
+
+    Lscpy(a, &info, "PRO");
+    CHECK(Labbrev(&l, &info, 0) == 0, "'PRO' is not an abbrev of 'PRINT'");
+
+    Lscpy(a, &s1, "abc  ");
+    Lscpy(a, &s2, "abc");
+    CHECK(Lcompare(&s1, &s2, ' ') == 0,
+          "Lcompare equal with pad=' '");
+
+    Lscpy(a, &s2, "abcd");
+    CHECK(Lcompare(&s1, &s2, ' ') == 4,
+          "Lcompare finds difference at pos 4");
+
+    Lfree(a, &l);  Lfree(a, &info);
+    Lfree(a, &s1); Lfree(a, &s2);
+}
+
 static void test_bad_args(void)
 {
     struct lstr_alloc *a = lstr_default_alloc();
@@ -505,6 +589,9 @@ int main(void)
     test_word_index_length();
     test_wordpos();
     test_delword();
+    test_pos_lastpos();
+    test_verify();
+    test_abbrev_compare();
     test_bad_args();
 
     printf("\n=== Results: %d/%d passed",
