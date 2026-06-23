@@ -5,7 +5,12 @@
 *.o
 *.d
 
+# Static libraries / load module unloads
+*.a
+*.iebcopy
+
 # Build artifacts
+build/
 *.jcl
 contrib/
 dist/
