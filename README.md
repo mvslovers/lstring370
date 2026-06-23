@@ -41,12 +41,19 @@ project.toml       mbt build configuration
 
 ## Build
 
+The library builds entirely on the host with the cc370 toolchain (mbt v2);
+MVS is not touched at build time.
+
 ```sh
-make bootstrap     # resolve crent370 from GitHub Releases, allocate datasets
-make build         # cross-compile + assemble on MVS via mbt
+make lib           # cc370 compile + ar370 archive -> build/lstring370.a
+make package       # release tarball (lib + headers) in dist/
+make doctor        # verify the cc370 toolchain
 ```
 
-Cross-compile tests on the host:
+Consumers (rexx370, httpd, …) pull the library in via mbt dependencies —
+`make deps` stages `build/lstring370.a` and the public headers automatically.
+
+Cross-compile the host unit tests with the native compiler:
 
 ```sh
 gcc -I include -Wall -Wextra -std=gnu99 -o test/test_lstring \

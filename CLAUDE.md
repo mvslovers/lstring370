@@ -18,12 +18,15 @@ subsystem with:
 
 ## Build system
 
-- **Compiler:** c2asm370 (C → S/370 assembler cross-compiler)
-- **C library:** crent370 (reentrant C runtime, provides `malloc`/
-  `free`, `<string.h>`, `<ctype.h>`, MVS APIs)
-- **Build tool:** mbt — reads `project.toml`
-- **Type:** `library` (no link modules; consumers link the objects
-  they need)
+- **Compiler:** cc370 (mbt v2 host toolchain — `cc370` / `as370` /
+  `ar370`; compile + archive run on the host, no MVS round-trip)
+- **C library:** crent370, supplied by the cc370 sysroot libc
+  (`-lc`) — `malloc` / `free`, `<string.h>`, `<ctype.h>`, MVS APIs.
+  It ships with the toolchain, so it is *not* a declared dependency.
+- **Build tool:** mbt v2 — reads `project.toml` (two-line `Makefile`)
+- **Type:** `library` — `make lib` builds the static archive
+  `build/lstring370.a`; consumers pull it in via mbt dependencies
+  (`make deps` stages the `.a` plus the public headers)
 - **Target:** MVS 3.8j, AMODE 24, RMODE 24, RENT
 
 ## File naming convention
@@ -56,8 +59,8 @@ Headers use plain names in `include/`.
 3. **No POSIX, no dynamic linking.** Strict 24-bit. No `mmap`,
    no `pthread`, no `fork`. No standard Unix paths.
 
-4. **Strict gnu99 (C89-compatible).** Compiled with GCC 3.2.3
-   (c2asm370). `-Wall -Werror` is enforced.
+4. **Strict gnu99 (C89-compatible).** Compiled with cc370
+   (GCC 3.4.6 `i370` cross-compiler). `-Wall -Werror` is enforced.
 
 5. **EBCDIC.** Use `isalpha`, `isdigit`, `isalnum`, `isspace`,
    `toupper`, `tolower` from `<ctype.h>`. Never compare against
