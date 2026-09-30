@@ -65,3 +65,14 @@ gcc -I include -Wall -Wextra -std=gnu99 -o test/test_lstring \
 
 Early development. Phase 2 of REXX/370 is the first consumer. See
 `https://github.com/mvslovers/lstring370/issues` for open work packages.
+
+## Provenance
+
+The API naming (`Lstr`, `PLstr`, `Lfx`, `Lstrcpy`, `LSTRING_TY`, …) follows
+the `lstring` interface of BREXX by Vasilis N. Vlachoudis, which REXX/370's
+string handling was modelled on. The implementation is independent: no BREXX
+source code is part of this library.
+
+## License
+
+MIT License, Copyright (c) 2026 Mike Großmann. See [LICENSE](LICENSE).
