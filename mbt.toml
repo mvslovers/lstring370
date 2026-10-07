@@ -32,8 +32,13 @@ mbt = "3.0"
 cc370 = "1.4.0"
 libc370 = "2.4.1"
 
-# Files under test/ that are not tests (test/**/*.c and *.asm are, by default).
+# Every test/**/*.c is a test, named after its file. The tests keep their
+# counters in static storage, so they are neither reentrant nor reusable.
 [tests]
-exclude = [
-  "test/test_lstring.c",
-]
+rent = false
+reus = false
+
+# A test is built from its own file only; this one exercises the whole
+# library, so it links every source module.
+[test.TSTLSTR]
+sources = ["test/tstlstr.c", "src/lstr#*.c"]

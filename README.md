@@ -40,7 +40,7 @@ src/
   lstr#cvt.c       base conversion (c2x, x2c, ...)
   lstr#fmt.c       output / number formatting
 test/
-  test_lstring.c   unit tests, built with the native compiler (see below)
+  tstlstr.c        unit tests (mbt test)
 mbt.toml           mbt 3 build configuration
 ```
 
@@ -52,6 +52,7 @@ your `PATH`. MVS is not touched at build time.
 
 ```sh
 mbt build          # cc370 compile + ar370 archive -> build/lstring370.a
+mbt test           # build and run the unit tests on the host
 mbt package        # release tarball (lib + headers) in dist/
 mbt clean          # remove build/ and dist/
 mbt doctor         # verify the cc370 toolchain
@@ -62,16 +63,6 @@ release is built with.
 
 Consumers (rexx370, httpd, …) pull the library in via mbt dependencies —
 `mbt deps` stages `build/lstring370.a` and the public headers automatically.
-
-The unit tests are not yet an mbt test (`mbt.toml` excludes them in
-`[tests]`, see issue #9), so `mbt test` runs nothing. Build and run them
-with the native compiler:
-
-```sh
-gcc -I include -Wall -Wextra -std=gnu99 -o test/test_lstring \
-    test/test_lstring.c 'src/lstr#'*.c
-./test/test_lstring
-```
 
 ## Status
 

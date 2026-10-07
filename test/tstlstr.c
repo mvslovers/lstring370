@@ -1,9 +1,8 @@
 /* ------------------------------------------------------------------ */
-/*  test_lstring.c - lstring370 core unit tests (cross-compile)       */
+/*  tstlstr.c - lstring370 unit tests                                 */
 /*                                                                    */
-/*  Build:                                                            */
-/*    gcc -I include -Wall -Wextra -std=gnu99 -o test/test_lstring \  */
-/*        test/test_lstring.c 'src/lstr#cor.c'                        */
+/*  Built and run by mbt: `mbt test` on the host, `mbt test --mvs`    */
+/*  on MVS. [test.TSTLSTR] in mbt.toml links it with src/lstr#*.c.    */
 /*                                                                    */
 /*  (c) 2026 mvslovers                                                */
 /* ------------------------------------------------------------------ */

@@ -34,8 +34,10 @@ subsystem with:
   pull it in via mbt dependencies (`mbt deps` stages the `.a` plus the
   public headers). There are no load modules, so `mbt deploy` does not
   apply.
-- **Tests:** `test/test_lstring.c` is excluded in `[tests]` and built
-  with the native compiler for now; making it an mbt test is issue #9.
+- **Tests:** `test/tstlstr.c` is the test `TSTLSTR` (`mbt test` on the
+  host, `mbt test --mvs` on MVS). mbt builds a test from its own file
+  only, so `[test.TSTLSTR]` adds `src/lstr#*.c`. A new test file needs
+  a name of at most 8 characters.
 - **Target:** MVS 3.8j, AMODE 24, RMODE 24, RENT
 
 ## File naming convention
