@@ -19,7 +19,7 @@ mvslovers project.
 - **Memory-conscious.** Length-prefixed buffers, explicit capacity
   growth, no surprise reallocation. Targets MVS 3.8j (24-bit AMODE).
 - **EBCDIC-safe.** Character classification via `<ctype.h>` from
-  `crent370`. No hardcoded ASCII values in the logic.
+  `libc370`. No hardcoded ASCII values in the logic.
 - **No REXX type caching.** The `type` field on `Lstr` is always
   `LSTRING_TY` — REXX-specific number caching lives in the rexx370
   adapter (WP-11b), not here.
@@ -33,27 +33,39 @@ include/
 src/
   lstr#cor.c       core: Lfx, Lscpy, Lstrcpy, Lcat, Lstrcat, Lfree,
                    Lupper, Llower
-  ... more in follow-up PRs (sub, wrd, srch, xlt, cvt, fmt)
+  lstr#sub.c       substring / position
+  lstr#wrd.c       word operations
+  lstr#srch.c      search / compare
+  lstr#xlt.c       translate / strip / space
+  lstr#cvt.c       base conversion (c2x, x2c, ...)
+  lstr#fmt.c       output / number formatting
 test/
-  test_lstring.c   cross-compile unit tests (Linux/gcc)
-mbt.toml           mbt build configuration
+  test_lstring.c   unit tests, built with the native compiler (see below)
+mbt.toml           mbt 3 build configuration
 ```
 
 ## Build
 
-The library builds entirely on the host with the cc370 toolchain (mbt 3);
-MVS is not touched at build time.
+The library builds entirely on the host with the cc370 toolchain and
+[mbt 3](https://github.com/mvslovers/mbt), the `mbt` program installed on
+your `PATH`. MVS is not touched at build time.
 
 ```sh
 mbt build          # cc370 compile + ar370 archive -> build/lstring370.a
 mbt package        # release tarball (lib + headers) in dist/
+mbt clean          # remove build/ and dist/
 mbt doctor         # verify the cc370 toolchain
 ```
+
+`[toolchain]` in `mbt.toml` pins the mbt, cc370 and libc370 versions a
+release is built with.
 
 Consumers (rexx370, httpd, …) pull the library in via mbt dependencies —
 `mbt deps` stages `build/lstring370.a` and the public headers automatically.
 
-Cross-compile the host unit tests with the native compiler:
+The unit tests are not yet an mbt test (`mbt.toml` excludes them in
+`[tests]`, see issue #9), so `mbt test` runs nothing. Build and run them
+with the native compiler:
 
 ```sh
 gcc -I include -Wall -Wextra -std=gnu99 -o test/test_lstring \
