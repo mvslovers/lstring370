@@ -36,22 +36,22 @@ src/
   ... more in follow-up PRs (sub, wrd, srch, xlt, cvt, fmt)
 test/
   test_lstring.c   cross-compile unit tests (Linux/gcc)
-project.toml       mbt build configuration
+mbt.toml           mbt build configuration
 ```
 
 ## Build
 
-The library builds entirely on the host with the cc370 toolchain (mbt v2);
+The library builds entirely on the host with the cc370 toolchain (mbt 3);
 MVS is not touched at build time.
 
 ```sh
-make lib           # cc370 compile + ar370 archive -> build/lstring370.a
-make package       # release tarball (lib + headers) in dist/
-make doctor        # verify the cc370 toolchain
+mbt build          # cc370 compile + ar370 archive -> build/lstring370.a
+mbt package        # release tarball (lib + headers) in dist/
+mbt doctor         # verify the cc370 toolchain
 ```
 
 Consumers (rexx370, httpd, …) pull the library in via mbt dependencies —
-`make deps` stages `build/lstring370.a` and the public headers automatically.
+`mbt deps` stages `build/lstring370.a` and the public headers automatically.
 
 Cross-compile the host unit tests with the native compiler:
 
