@@ -5,35 +5,18 @@ name = "lstring370"
 version = "1.0.0-dev"
 kind = "library"
 
-[build]
-# -Wall -Werror per the project's cardinal rules; verified clean under cc370.
-include = ["include"]
-cflags = ["-Wall", "-Werror"]
+[toolchain]
+mbt = "3.0"
+cc370 = "1.4.0"
+libc370 = "2.4.1"
 
-# ── Static library ───────────────────────────────────────
-# lstring370 is consumed as a single archive: rexx370, httpd, ftpd,
-# ufsd and others declare it in [dependencies] and `make deps` stages
-# build/lstring370.a + the headers below.  The C runtime (malloc/free,
-# <string.h>, <ctype.h>) comes from the cc370 sysroot libc (-lc), so no
-# crent370 dependency is needed here.
+[build]
+
 [lib]
 name = "lstring370"
 sources = ["src/lstr#*.c"]
 headers = ["include/lstring.h", "include/lstralloc.h"]
 
-# ── Release ──────────────────────────────────────────────
-[toolchain]
-# Pins the refs release.yml builds the published artifacts against; build.yml
-# deliberately keeps floating on main so a cc370/libc370 regression surfaces
-# in a PR build (mbt#68). libc370 2.4.1 requires cc370 >= 1.4.0, < 2.
-# lstring370 includes only ISO C headers, whose names did not move in
-# libc370 2.0, so the port is these pins alone.
-mbt = "3.0"
-cc370 = "1.4.0"
-libc370 = "2.4.1"
-
-# Every test/**/*.c is a test, named after its file. The tests keep their
-# counters in static storage, so they are neither reentrant nor reusable.
 [tests]
 rent = false
 reus = false
