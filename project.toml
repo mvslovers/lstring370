@@ -22,10 +22,11 @@ headers = ["include/lstring.h", "include/lstralloc.h"]
 [toolchain]
 # Pins the refs release.yml builds the published artifacts against; build.yml
 # deliberately keeps floating on main so a cc370/libc370 regression surfaces
-# in a PR build (mbt#68). cc370 is omitted -- it defaults to main and has no
-# releases to pin to yet. lstring370 includes only ISO C headers, whose
-# names did not move in libc370 2.0, so the port is this pin alone.
-libc370 = "2.4.0"
+# in a PR build (mbt#68). libc370 2.4.1 requires cc370 >= 1.4.0, < 2.
+# lstring370 includes only ISO C headers, whose names did not move in
+# libc370 2.0, so the port is these pins alone.
+cc370 = "1.4.0"
+libc370 = "2.4.1"
 
 [release]
 version_files = ["VERSION"]
