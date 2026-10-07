@@ -828,6 +828,22 @@ static void test_b2x_x2b(void)
 /*  lstr#fmt.c tests                                                  */
 /* ------------------------------------------------------------------ */
 
+/* A temporary file that can be written and read back.  On MVS not
+   tmpfile(): libc370 opens it "wb", which refuses the read-back
+   (libc370#395), and a closed &&TMP data set cannot be reopened.  On
+   the host tmpfile() is the portable way (tmpnam is deprecated there). */
+static FILE *open_scratch(void)
+{
+#ifdef __MVS__
+    char fn[FILENAME_MAX];
+
+    if (tmpnam(fn) == NULL) return NULL;
+    return fopen(fn, "wb+");
+#else
+    return tmpfile();
+#endif
+}
+
 static void test_lprint(void)
 {
     struct lstr_alloc *a = lstr_default_alloc();
@@ -842,9 +858,9 @@ static void test_lprint(void)
     Lzeroinit(&s);
     Lscpy(a, &s, "hello world");
 
-    fp = tmpfile();
+    fp = open_scratch();
     if (fp == NULL) {
-        CHECK(0, "tmpfile() available");
+        CHECK(0, "temporary file available");
         Lfree(a, &s);
         return;
     }
@@ -856,6 +872,9 @@ static void test_lprint(void)
     got = fread(buf, 1, sizeof(buf), fp);
     CHECK(got == 11 && memcmp(buf, "hello world", 11) == 0,
           "Lprint wrote exactly the Lstr bytes (no NUL, no extras)");
+    if (got != 11)
+        printf("  INFO: read back %lu bytes, ferror=%d, feof=%d\n",
+               (unsigned long)got, ferror(fp), feof(fp));
 
     fclose(fp);
     Lfree(a, &s);
